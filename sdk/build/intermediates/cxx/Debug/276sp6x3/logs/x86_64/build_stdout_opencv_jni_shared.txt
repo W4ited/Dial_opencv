@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\Administrator\AndroidStudioProjects\Dial_MGP\sdk\.cxx\Debug\276sp6x3\x86_64'
+ninja: no work to do.

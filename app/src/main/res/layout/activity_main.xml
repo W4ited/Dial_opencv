@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".MainActivity">
+
+    <!--主活动-->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/home_viewPager2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
+
+    <!--选项卡指示器Indicator 选项卡容器相关Ripple-->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/home_tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#FFFFFF"
+        android:minHeight="?attr/actionBarSize"
+        app:tabIndicatorAnimationMode="elastic"
+        app:tabIndicatorColor="#FFCCCC"
+        app:tabIndicatorGravity="top"
+        app:tabRippleColor="#CCFFFFFF"
+        app:tabSelectedTextColor="#FFCCCC"
+        app:tabTextColor="#929299"
+        app:tabUnboundedRipple="true">
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/item_one"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.tabs.TabItem
+            android:id="@+id/item_two"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+    </com.google.android.material.tabs.TabLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

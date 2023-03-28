@@ -1,0 +1,1 @@
+C:\Users\Administrator\AndroidStudioProjects\Dial_MGP\sdk\build\intermediates\cxx\Debug\276sp6x3\obj\arm64-v8a
