@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     /**
      * 会有情况 出现ANR问题 UI not response
+     *
+     * 可以将功能修改为函数形式 传参bitmap 在里面new Mat 在里面release释放空间
      */
 
     //碎片切换
@@ -56,13 +58,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Mat mat1, mat2;
     private List<MatOfPoint> contours = new ArrayList<>();  //轮廓列表
     private int count = 0;
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mat1.release();
-        mat2.release();
-    }
 
 
     @Override
@@ -91,6 +86,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //会导致anr问题？ 还没找到问题
 
+        //用mat读入图片
+        try {
+            mat1 = Utils.loadResource(this,R.drawable.meter);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         //碎片代码
         /**
@@ -118,11 +119,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.test_start:
 
                 //用mat读入图片
-                try {
-                    mat1 = Utils.loadResource(this,R.drawable.meter);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    mat1 = Utils.loadResource(this,R.drawable.meter);
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
 
                 //bitmap1 = BitmapFactory.decodeResource(getResources(), R.drawable.meter);
                 //test1.setImageBitmap(bitmap1);
@@ -156,7 +157,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //要先创建bitmap的窗口大小 否则直接用mat转换为bitmap会因为没有图片窗口大小而导致闪退
                 bitmap2 = Bitmap.createBitmap(mat2.width(), mat2.height(), Bitmap.Config.ARGB_8888);
 
-
                 Utils.matToBitmap(mat2, bitmap2);    //mat转为bitmap格式用于Android上显示图片
                 test2.setImageBitmap(bitmap2);
 
@@ -182,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bitmap3 = Bitmap.createBitmap(gauss.width(), gauss.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(gauss, bitmap3);    //mat转为bitmap格式用于Android上显示图片
                 test3.setImageBitmap(bitmap3);
+                //end 高斯模糊
 
                 Mat gray = new Mat();
                 //Imgproc.cvtColor(gau,gray,Imgproc.COLOR_BGR2GRAY);
@@ -191,10 +192,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bitmap4 = Bitmap.createBitmap(gray.width(), gray.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(gray, bitmap4);    //mat转为bitmap格式用于Android上显示图片
                 test4.setImageBitmap(bitmap4);
+                //end Canny边缘检测
+
 
                 //霍夫圆检测
                 Mat circles = new Mat();
-
                 /**
                  * ！！！修改参数
                  * @param image 输入的图像
@@ -227,6 +229,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bitmap5 = Bitmap.createBitmap(mat1.width(), mat1.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(mat1,bitmap5);
                 test5.setImageBitmap(bitmap5);
+                //end 霍夫圆检测
+
+
+                //霍夫直线检测
+
+                //释放mat内存
+                mat1.release();
+                mat2.release();
+                gauss.release();
+                gray.release();
+                circles.release();
                 break;
 
             default:
