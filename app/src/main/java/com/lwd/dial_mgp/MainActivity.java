@@ -266,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                  */
                 Imgproc.adaptiveThreshold(gauss2, gauss2, 255
                         , Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, 5);
+                //自适应阈值这里 最后C常数的改变 5时候 gauss2的图像显示 背景全白 -10时候背景全黑 并且改了之后 刻度线的寻找出现误差
 
 
                 //轮廓识别
