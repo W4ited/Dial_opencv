@@ -27,6 +27,7 @@ import com.lwd.dial_mgp.Result.ResultActivity;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfFloat6;
@@ -171,9 +172,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 test2.setImageBitmap(bitmap2);
 
                 Mat gauss = new Mat();
+                Mat average = new Mat();
 
                 //均值模糊
-                //Imgproc.blur(mat2,gau,new Size(3,3),new Point(-1,-1), Core.BORDER_DEFAULT);
+                Imgproc.blur(mat2, average, new Size(3, 3), new Point(-1, -1), Core.BORDER_DEFAULT);
 
                 //高斯模糊
                 Imgproc.GaussianBlur(mat2, gauss, new Size(5, 5), 0);
@@ -186,7 +188,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Mat canny = new Mat();
 
                 //Canny边缘检测
-                Imgproc.Canny(gauss, canny, 40, 150);
+                /** Canny边缘检测
+                 * @param image 输入图像
+                 * @param edges 表示输出的二值化边缘图像
+                 * @param threshold1 表示低阈值T1
+                 * @param threshold2 表示低阈值T2
+                 * @param apertureSize 用于内部计算梯度Sobel
+                 * @param L2gradient  计算图像梯度的计算方法
+                 *                    Canny函数的第四个参数来指定连接方法（默认为True，即双阈值连接方法），
+                 *                    将其设置为False可以使用基于单阈值的连接方法。
+                 *
+                 * canny输出的二值图
+                 * Canny边缘检测算法首先会对输入图像进行高斯滤波，以减少噪声的影响。
+                 * 您可以尝试增大高斯滤波器的大小，以获得更平滑的图像，从而提高边缘检测的准确性。
+                 *
+                 * 可以尝试减小低阈值，以检测更多的边缘。
+                 */
+                Imgproc.Canny(gauss, canny, 5, 90, 3, false);
                 bitmap4 = Bitmap.createBitmap(canny.width(), canny.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(canny, bitmap4);    //mat转为bitmap格式用于Android上显示图片
                 test4.setImageBitmap(bitmap4);
@@ -246,9 +264,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //刻度线
                 Mat temp = new Mat();
                 Mat gauss2 = new Mat();
+                Mat gaussTest = new Mat();
                 Utils.bitmapToMat(bitmap5, temp);
                 Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2GRAY); //转灰度
-                Imgproc.GaussianBlur(temp, gauss2, new Size(3, 3), 0);  //高斯
+                //高斯
+                Imgproc.GaussianBlur(temp, gauss2, new Size(3, 3), 0);
+                Imgproc.GaussianBlur(temp, gaussTest, new Size(3, 3), 0);
 
                 /**自动阈值法 adaptiveThreshold
                  * src : Mat 输入图像
@@ -264,8 +285,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                  * blockSize : int 用来计算阈值的邻域尺寸 3，5，7等等，奇数
                  * C : double 减去平均值或加权平均值的常数，通常情况下，它是正的，但也可能是零或负。
                  */
+                //自动阈值法
                 Imgproc.adaptiveThreshold(gauss2, gauss2, 255
                         , Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, 5);
+                Imgproc.adaptiveThreshold(gaussTest, gaussTest, 255
+                        , Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, -10);
                 //自适应阈值这里 最后C常数的改变 5时候 gauss2的图像显示 背景全白 -10时候背景全黑 并且改了之后 刻度线的寻找出现误差
 
 
@@ -323,8 +347,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //drawContours 用于测试是否找到最大的圆轮廓 --> 即为表盘 画出表盘
                 //circle 用于测试是否找到圆心 --> 画出圆心
-                Imgproc.drawContours(temp, Arrays.asList(largestContours), -1, new Scalar(255, 0, 0), 4);
-                Imgproc.circle(temp, center, 5, new Scalar(255, 0, 0), 2);
+                //Imgproc.drawContours(temp, Arrays.asList(largestContours), -1, new Scalar(255, 0, 0), 4);
+                //Imgproc.circle(temp, center, 5, new Scalar(255, 0, 0), 2);
                 //感觉圆心有瑕疵 因为最外面表盘的圆轮廓不是很标准 所以导致 获取到的圆心也不是特别的标准
                 Log.d("count", "radius:" + radius[0]);
 
@@ -355,10 +379,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //找到矩形的中心点坐标
                     Point rectCenter = new Point(box[0].x + Math.abs((box[0].x - box[1].x) / 2),
                             box[3].y + Math.abs((box[0].y - box[3].y) / 2));
-                    double distance = distanceOfPoint(center.x, center.y, rectCenter.x, rectCenter.y);
+                    //Point rectCenter = new Point(box[1].x-box[3].x,box[1].y-box[3].y);
+                    double distance = Distance.distanceOfPoint(center.x, center.y, rectCenter.x, rectCenter.y);
 
                     //确定两个阈值
-                    if ((radius[0] * 0.609) < distance && (radius[0] )> distance) {
+                    if ((radius[0] * 0.609) < distance && (radius[0]) > distance) {
                         //在圆内部
                         location.add(distance); //记录位置 圆心和矩形中心的距离
                         if (h / w > 5 || w / h > 5) {
@@ -385,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
 
                 //是因为图像的原因？ 其实指针的直线不是特别的值 导致其实是一段一段的
-                Log.d("count","needleSize:" + needleCnt.size());
+                Log.d("count", "needleSize:" + needleCnt.size());
 
                 //下面有画出刻度线的另一种方式
                 //画出刻度
@@ -417,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     for (int i = 0; i < 4; i++) {
                         // 绘制最小外接矩形的 !(四条边) --> %4 保证找到全部四条边
                         //画出刻度线
-                        Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
+                        //Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
                     }
 
                     // 构造一个MatOfFloat对象，用于存储拟合得到的直线参数
@@ -440,7 +465,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // 将拟合得到的直线参数存储到一个float数组中
                     //float[] arr = output.toArray();
                     float[] arr = new float[output.rows() * output.cols()];
-                    output.get(0,0,arr);
+                    output.get(0, 0, arr);
                     float k = arr[1] / arr[0]; // 计算直线的斜率
                     k = Math.round(k * 100) / 100f;  // 将斜率保留两位小数
                     float b = arr[3] - k * arr[2];  // 计算直线的截距
@@ -455,13 +480,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     int y1 = Math.round(k * x1 + b);  // 计算直线起点的y坐标
                     //int y1 = (int) center.y;
                     int y2 = Math.round(k * x2 + b);  // 计算直线终点的y坐标
-                    Imgproc.line(temp, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 1);  // 绘制直线
+                    //拟合直线绘制
+                    //Imgproc.line(temp, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 1);  // 绘制直线
                     kb.add(new float[]{k, b});  // 将直线的斜率和截距存储到kb列表中
 
                 }
 
 
-                //霍夫直线检测
+                //霍夫直线检测 --> 找指针
                 /**
                  * HoughLines
                  * @param image 表示输入的图像 8位单通道图像 一般为二值图像
@@ -475,63 +501,149 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 /**
                  * HoughLinesP
                  * @param image 表示输入的图像 8位单通道图像 一般为二值图像
+                 *              -> 输入的二值化图像，必须为单通道、8 位或 32 位浮点数格式。
                  * @param lines 表示输出的每个直线的极坐标参数方程的两个参数
+                 *              -> 输出的直线参数矩阵，每行包含四个整数，表示检测到的一条直线的起始点和终止点的坐标。
                  * @param rho 表示极坐标空间r值每次的步长 一般为1
+                 *            -> 极径的分辨率，以像素为单位。
                  * @param theta 表示角度θ 每次移动1°即可
+                 *              -> 极角的分辨率，以弧度为单位。
                  * @param threshold 表示极坐标中该点的累积数 越大则直线可能越长 通常30~50 单位像素
                  *        假设30时候 则表示大于30个像素长度的直线才会被检测到
+                 *              -> 直线阈值，用于确定检测到的直线是否有效。
                  * @param minLineLength 表示可以检测的最小线段长度  ！！根据实际需要进行设置!!
+                 *                      -> 直线的最小长度。
                  * @param maxLineGap 表示线段之间的最大间隔像素 假设5表示小于5个像素的两个相邻线段可以连接起来
+                 *                   -> 直线的最大间隔。
                  */
+
+                //直接用canny来霍夫直线检测 因为canny边缘检测 会包括仪表盘外
+                //所以可以先使用掩膜 来保证 霍夫直线检测是检测 仪表盘之内的
+                //Mat mask = new Mat(mat1.size(), mat1.type(), Scalar.all(0));
+                Mat circleMask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
+                Imgproc.circle(circleMask, center, (int) radius[0], new Scalar(255, 255, 255), -1);
+                Mat circle = new Mat();
+                Core.bitwise_and(temp, circleMask, circle);
+
+                Mat gray = new Mat();
+                // 将掩码转换为灰度图像
+                //Imgproc.cvtColor(circle, gray, Imgproc.COLOR_BGR2GRAY);
+
+                //Canny边缘检测
+                /** Canny边缘检测
+                 * @param image 输入图像
+                 * @param edges 表示输出的二值化边缘图像
+                 * @param threshold1 表示低阈值T1
+                 * @param threshold2 表示低阈值T2
+                 * @param apertureSize 用于内部计算梯度Sobel
+                 * @param L2gradient  计算图像梯度的计算方法
+                 *                    Canny函数的第四个参数来指定连接方法（默认为True，即双阈值连接方法），
+                 *                    将其设置为False可以使用基于单阈值的连接方法。
+                 *
+                 * canny输出的二值图
+                 * Canny边缘检测算法首先会对输入图像进行高斯滤波，以减少噪声的影响。
+                 * 您可以尝试增大高斯滤波器的大小，以获得更平滑的图像，从而提高边缘检测的准确性。
+                 *
+                 * 可以尝试减小低阈值，以检测更多的边缘。
+                 */
+                Imgproc.Canny(circle,gray,20,150,3,true);
+
+                Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
+                // 膨胀计算
+                Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 1);
+                //形态学膨胀操作 将掩膜图像中的白色区域扩大一点 --> 以避免直线检测时漏掉元素
+
+                //霍夫直线检测
                 Mat lines = new Mat();
-                Imgproc.HoughLinesP(gauss2, lines,1,Math.PI/180.0,100,15,2);
+                //canny gauss2 gauss
+                //使用gauss2 和 gaussTest 图像不一样  -----> 见上面275行的代码
+                //参数 minLineLength 表示可以检测的最小线段长度 设置为半径的一半
+                //因为指针比半径的一半长 以排除其他线
+                Imgproc.HoughLinesP(gray, lines, 1, Math.PI / 180.0, 100, (radius[0] / 2), 2);
 
+
+                Mat n_mask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
                 for (int i = 0; i < lines.rows(); i++) {
-                    //HoughLines
-                    //double rho = lines.get(i, 0)[0], theta = lines.get(i, 0)[1];
-                    //double a = Math.cos(theta), b = Math.sin(theta);
-                    //double x0 = a * rho,y0 = b * rho;
-                    //Point pt1 = new Point(Math.round(x0 + 1000 * (-b)),Math.round(y0 + 1000*(a)));
-                    //Point pt2 = new Point(Math.round(x0 - 1000*(-b)),Math.round(y0 - 1000 * (a)));
-
-                    //HoughLinesP
-                    int [] oneLine = new int[4];
-                    lines.get(i,0,oneLine);
-
-                    //绘制直线
-                    //Imgproc.line(result,pt1,pt2,new Scalar(0,0,255),3,Imgproc.LINE_AA,0);
-                    //Imgproc.line(temp,new Point(oneLine[0],oneLine[1]),new Point(oneLine[2],oneLine[3]),new Scalar(0,0,255),2,8,0);
+//                    //HoughLines
+//                    //double rho = lines.get(i, 0)[0], theta = lines.get(i, 0)[1];
+//                    //double a = Math.cos(theta), b = Math.sin(theta);
+//                    //double x0 = a * rho,y0 = b * rho;
+//                    //Point pt1 = new Point(Math.round(x0 + 1000 * (-b)),Math.round(y0 + 1000*(a)));
+//                    //Point pt2 = new Point(Math.round(x0 - 1000*(-b)),Math.round(y0 - 1000 * (a)));
+//
+//                    //HoughLinesP
+//                    int[] oneLine = new int[4];
+//                    lines.get(i, 0, oneLine);
+//
+                    double[] line = lines.get(i,0);
+                    double x1 = line[0];
+                    double y1 = line[1];
+                    double x2 = line[2];
+                    double y2 = line[3];
+                    Imgproc.line(n_mask,new Point(x1,y1),new Point(x2,y2),new Scalar(100,100,100),1,Imgproc.LINE_AA,0);
+//
+//                    /**
+//                     * 判断直线长度和半径的关系？
+//                     *  -->
+//                     *  以此去除干扰 找到指针
+//                     *  --> 调用函数 计算欧几里得距离
+//                     */
+//                    double distance = Distance.distanceOfPoint(oneLine[0], oneLine[1], oneLine[2], oneLine[3]);
+////                    if (distance < radius[0] && distance > (radius[0]/2)) {
+////
+////
+////                        //绘制直线
+////                        //Imgproc.line(result,pt1,pt2,new Scalar(0,0,255),3,Imgproc.LINE_AA,0);
+////
+////                        Imgproc.line(temp, new Point(oneLine[0], oneLine[1]), new Point(oneLine[2], oneLine[3]), new Scalar(0, 0, 255), 2, 8, 0);
+////
+////                        //从圆心开始画指针线
+////                        //Imgproc.line(temp,center,new Point(oneLine[2],oneLine[3]),new Scalar(0,0,255),2,8,0);
+////                    }
+                    //Imgproc.line(gray, new Point(oneLine[0], oneLine[1]), new Point(oneLine[2], oneLine[3]), new Scalar(0, 0, 255), 2, 8, 0);
                 }
 
 
-                //gauss2
-                bitmap6 = Bitmap.createBitmap(temp.width(), temp.height(), Bitmap.Config.ARGB_8888);
-
-                Utils.matToBitmap(temp, bitmap6);
+                //temp
+                bitmap6 = Bitmap.createBitmap(n_mask.width(), n_mask.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(n_mask, bitmap6);
                 test6.setImageBitmap(bitmap6);
                 //end 霍夫直线检测
 
 
-                Utils.matToBitmap(gauss2,bitmap5);
+                Utils.matToBitmap(gaussTest, bitmap5);
                 test5.setImageBitmap(bitmap5);
 
-                //高斯背景重建
+                bitmap1 = Bitmap.createBitmap(gauss2.width(), gauss2.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(gauss2, bitmap1);
+                test1.setImageBitmap(bitmap1);
+
+
+                //高斯背景重建？？
 
 
                 //释放mat内存
                 // ！！ 否则可能导致anr的问题？ ！！
-                // --> 封装起来用一个release方法
+                // --> 封装起来用一个release方法 -->但是需要传参
+
                 mat1.release();
                 mat2.release();
                 gauss.release();
+                average.release();
                 canny.release();
                 circles.release();
                 mask.release();
                 result.release();
                 temp.release();
                 gauss2.release();
+                gaussTest.release();
                 outMat.release();
                 lines.release();
+                circleMask.release();
+                circle.release();
+                kernel.release();
+                gray.release();
+                n_mask.release();
                 break;
 
             default:
@@ -539,20 +651,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    /**
-     * 计算两点之间的距离 --> 欧几里得距离
-     *
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
-     * @return
-     */
-    public static double distanceOfPoint(double x1, double y1, double x2, double y2) {
-        //两点之间距离 欧几里得距离
-        int distance = (int) Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
-        return distance;
+
+    public static class Distance {
+        /**
+         * 计算两点之间的距离 --> 欧几里得距离
+         * double
+         *
+         * @param x1
+         * @param y1
+         * @param x2
+         * @param y2
+         * @return
+         */
+        public static double distanceOfPoint(double x1, double y1, double x2, double y2) {
+            //两点之间距离 欧几里得距离
+            int distance = (int) Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
+            return distance;
+        }
+
+        /**
+         * 计算两点之间的距离 --> 欧几里得距离
+         * int
+         *
+         * @param x1
+         * @param y1
+         * @param x2
+         * @param y2
+         * @return
+         */
+        public static int distanceOfPoint(int x1, int y1, int x2, int y2) {
+            int distance = (int) Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
+            return distance;
+        }
     }
+
 
     /**
      * 导入opencv
