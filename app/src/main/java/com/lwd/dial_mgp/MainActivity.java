@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ImageView test1, test2, test3, test4, test5, test6;
     private Button start;
+    private TextView test_result;
     private Bitmap bitmap1, bitmap2, bitmap3, bitmap4, bitmap5, bitmap6;
     private List<MatOfPoint> contours = new ArrayList<>();  //原始轮廓列表
 
@@ -97,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         start = (Button) findViewById(R.id.test_start);
         start.setOnClickListener(this);
+
+        test_result = (TextView) findViewById(R.id.text_result);
 
         //在外面new 则再次点击按钮时候会出错 因为再次点击时候没有new开空间 因为最后时候release释放了
         //mat1 = new Mat();
@@ -263,9 +267,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //刻度线
                 Mat temp = new Mat();
+                Mat temp1 = new Mat();
                 Mat gauss2 = new Mat();
                 Mat gaussTest = new Mat();
                 Utils.bitmapToMat(bitmap5, temp);
+
+                //Utils.bitmapToMat(bitmap5,temp1);
+                temp1 = temp;
+
                 Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2GRAY); //转灰度
                 //高斯
                 Imgproc.GaussianBlur(temp, gauss2, new Size(3, 3), 0);
@@ -393,24 +402,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
 
                         //这里判断指针没有写 --> 看是否可以后面使用霍夫直线检测
-                        else { // 否则，将该轮廓添加到指针轮廓列表中
-
-                            //1.指针长度不会大于表盘
-                            //2.指针必定在表盘内
-                            //3.指针一定过圆心
-
-                            if (w > (radius[0] * 2) || h > (radius[0] * 2)) {
-                                // 如果宽度或高度大于圆半径的一半，则认为是指针
-                                needleCnt.add(contour); // 添加到指针轮廓列表
-                                needleAreas.add(w * h); //添加面积 --> 面积的用处
-                            }
-                        }
+//                        else { // 否则，将该轮廓添加到指针轮廓列表中
+//
+//                            //1.指针长度不会大于表盘
+//                            //2.指针必定在表盘内
+//                            //3.指针一定过圆心
+//
+//                            if (w > (radius[0] * 2) || h > (radius[0] * 2)) {
+//                                // 如果宽度或高度大于圆半径的一半，则认为是指针
+//                                needleCnt.add(contour); // 添加到指针轮廓列表
+//                                needleAreas.add(w * h); //添加面积 --> 面积的用处
+//                            }
+//                        }
 
                     }
                 }
 
                 //是因为图像的原因？ 其实指针的直线不是特别的值 导致其实是一段一段的
-                Log.d("count", "needleSize:" + needleCnt.size());
+                //Log.d("count", "needleSize:" + needleCnt.size());
 
                 //下面有画出刻度线的另一种方式
                 //画出刻度
@@ -439,11 +448,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Point[] box = new Point[4];
                     // 将最小外接矩形的四个顶点存储到Point数组中
                     rect.points(box);
+
+
                     for (int i = 0; i < 4; i++) {
                         // 绘制最小外接矩形的 !(四条边) --> %4 保证找到全部四条边
                         //画出刻度线
-                        //Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
+                        Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
                     }
+
+
+
 
                     // 构造一个MatOfFloat对象，用于存储拟合得到的直线参数
                     MatOfFloat output = new MatOfFloat();
@@ -466,10 +480,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //float[] arr = output.toArray();
                     float[] arr = new float[output.rows() * output.cols()];
                     output.get(0, 0, arr);
-                    float k = arr[1] / arr[0]; // 计算直线的斜率
-                    k = Math.round(k * 100) / 100f;  // 将斜率保留两位小数
-                    float b = arr[3] - k * arr[2];  // 计算直线的截距
-                    b = Math.round(b * 100) / 100f;  // 将截距保留两位小数
+                    float k_scale = arr[1] / arr[0]; // 计算直线的斜率
+                    k_scale = Math.round(k_scale * 100) / 100f;  // 将斜率保留两位小数
+                    float b_scale = arr[3] - k_scale * arr[2];  // 计算直线的截距
+                    b_scale = Math.round(b_scale * 100) / 100f;  // 将截距保留两位小数
 
                     /**
                      * 把圆心作为拟合直线的起点 我只有右边有拟合直线
@@ -477,14 +491,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     int x1 = 0;  // 直线起点的x坐标
                     //int x1 = (int) center.x;
                     int x2 = mat2.cols();  // 直线终点的x坐标
-                    int y1 = Math.round(k * x1 + b);  // 计算直线起点的y坐标
+                    int y1 = Math.round(k_scale * x1 + b_scale);  // 计算直线起点的y坐标
                     //int y1 = (int) center.y;
-                    int y2 = Math.round(k * x2 + b);  // 计算直线终点的y坐标
+                    int y2 = Math.round(k_scale * x2 + b_scale);  // 计算直线终点的y坐标
                     //拟合直线绘制
                     //Imgproc.line(temp, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 1);  // 绘制直线
-                    kb.add(new float[]{k, b});  // 将直线的斜率和截距存储到kb列表中
+                    kb.add(new float[]{k_scale, b_scale});  // 将直线的斜率和截距存储到kb列表中
 
+
+                    //temp1 = temp;
                 }
+
+                Utils.matToBitmap(temp,bitmap2);
+                test2.setImageBitmap(bitmap2);
 
 
                 //霍夫直线检测 --> 找指针
@@ -520,10 +539,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //直接用canny来霍夫直线检测 因为canny边缘检测 会包括仪表盘外
                 //所以可以先使用掩膜 来保证 霍夫直线检测是检测 仪表盘之内的
                 //Mat mask = new Mat(mat1.size(), mat1.type(), Scalar.all(0));
-                Mat circleMask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
+
+                Imgproc.cvtColor(temp1,temp1,Imgproc.COLOR_BGR2RGB);
+
+                //temp temp1
+                Mat circleMask = new Mat(temp1.size(), mat1.type(), Scalar.all(0));
                 Imgproc.circle(circleMask, center, (int) radius[0], new Scalar(255, 255, 255), -1);
                 Mat circle = new Mat();
-                Core.bitwise_and(temp, circleMask, circle);
+                Core.bitwise_and(temp1, circleMask, circle);
 
                 Mat gray = new Mat();
                 // 将掩码转换为灰度图像
@@ -546,7 +569,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                  *
                  * 可以尝试减小低阈值，以检测更多的边缘。
                  */
-                Imgproc.Canny(circle,gray,20,150,3,true);
+                //20 150 当前效果较好
+                Imgproc.Canny(circle, gray, 20, 150, 3, true);
 
                 Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
                 // 膨胀计算
@@ -562,7 +586,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Imgproc.HoughLinesP(gray, lines, 1, Math.PI / 180.0, 100, (radius[0] / 2), 2);
 
 
-                Mat n_mask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
+                Mat n_mask = new Mat(temp1.size(), mat1.type(), Scalar.all(0));
+
+                double []axit = {0,0}; //保存指针直线的终点
                 for (int i = 0; i < lines.rows(); i++) {
 //                    //HoughLines
 //                    //double rho = lines.get(i, 0)[0], theta = lines.get(i, 0)[1];
@@ -575,12 +601,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                    int[] oneLine = new int[4];
 //                    lines.get(i, 0, oneLine);
 //
-                    double[] line = lines.get(i,0);
+                    double[] line = lines.get(i, 0);
                     double x1 = line[0];
                     double y1 = line[1];
                     double x2 = line[2];
                     double y2 = line[3];
-                    Imgproc.line(n_mask,new Point(x1,y1),new Point(x2,y2),new Scalar(100,100,100),1,Imgproc.LINE_AA,0);
+                    //必须绘制这直线 不然下面指针细化时候没有轮廓
+                    Imgproc.line(n_mask, new Point(x1, y1), new Point(x2, y2), new Scalar(100, 100, 100), 1, Imgproc.LINE_AA, 0);
+
+                    double d1 = Distance.distanceOfPoint(x1, y1, center.x, center.y);
+                    double d2 = Distance.distanceOfPoint(x2, y2, center.x, center.y);
+                    //为了找到直线的终点 用axit数组保存起来直线的终点
+                    if (d1 > d2){
+                        axit[0] = x1;
+                        axit[1] = y1;
+                    } else {
+                        axit[0] = x2;
+                        axit[1] = y2;
+                    }
+
+                    Log.d("axit" , "axit.x:" + axit[0] + "y:"+ axit[1]);
+
+                    //腐蚀操作 --> 可以缩小图像中的物体，使其变得更加细小 --> 看不到图像
+                    //Imgproc.erode(n_mask,n_mask,kernel,new Point(-1,-1),1);
+                    //膨胀操作 --> 线变粗
+                    //Imgproc.dilate(n_mask, n_mask, kernel, new Point(-1, -1), 1);
 //
 //                    /**
 //                     * 判断直线长度和半径的关系？
@@ -603,10 +648,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //Imgproc.line(gray, new Point(oneLine[0], oneLine[1]), new Point(oneLine[2], oneLine[3]), new Scalar(0, 0, 255), 2, 8, 0);
                 }
 
+                //再查找直线轮廓,指针细化,找指针的骨架
+                //找到图像中的轮廓
+                //MatOfPoint2f needleContours = new MatOfPoint2f();
+                Mat hierarchy = new Mat();
+                Imgproc.cvtColor(n_mask,n_mask,Imgproc.COLOR_RGB2GRAY);
+                Imgproc.GaussianBlur(n_mask, n_mask, new Size(3, 3), 0);
+                Imgproc.adaptiveThreshold(n_mask, n_mask, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, -10);
 
+
+                //needleCnt 为空的 --> 上面的指针绘制必须画出来 因为需要以此图进行轮廓寻找并且使用最小二乘法
+                //所以如果上面的指针不绘制 会导致图全黑 没有轮廓 所以找不到轮廓 下面get方法会报错
+                Imgproc.findContours(n_mask, needleCnt, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
+
+                Log.d("axit" , "needleSize:"  + needleCnt.size());
+                //计算每个轮廓的面积
+                for (MatOfPoint mat : needleCnt) {
+                    //计算轮廓面积
+                    double area = Imgproc.contourArea(mat);
+                    needleAreas.add(area);
+                }
+
+                Log.d("axit" , "needleAreasSize:"  + needleAreas.size());
+
+                //找到具有最大面积的轮廓的索引
+                int maxIndex = 0;       //开始索引为0 从开始找
+                double needleMaxArea = needleAreas.get(0); //开始最大面积为第一个 后面比较之后进行修改
+                for (int i = 0; i < needleAreas.size(); i++) {
+                    if (needleAreas.get(i) > needleMaxArea) {
+                        maxIndex = i;
+                        needleMaxArea = needleAreas.get(i);
+                    }
+                }
+
+                //获得最大面积的轮廓
+                //因为是按照轮廓列表 计算面积 所以索引也是对应位置
+                MatOfPoint maxContour = needleCnt.get(maxIndex);
+
+                Log.d("axit","maxIndex:" + maxIndex);
+
+                //使用最小二乘法拟合轮廓上的一条直线
+                MatOfPoint2f maxContour2f = new MatOfPoint2f(maxContour.toArray());
+                MatOfPoint2f lineParams = new MatOfPoint2f();
+                Imgproc.fitLine(maxContour2f, lineParams, Imgproc.DIST_L2, 0, 0.001, 0.001);
+
+                //计算直线的斜率和截距
+                double k_needle = lineParams.get(1, 0)[0] / lineParams.get(0, 0)[0];
+                double b_needle = lineParams.get(3, 0)[0] - k_needle * lineParams.get(2, 0)[0];
+
+                //获取直线上的两个点的x坐标
+                double x1_needle = center.x;
+                double x2_needle = axit[0];
+
+                //获取直线上的两个点的y坐标
+                int y1_needle = (int) Math.round(k_needle * x1_needle + b_needle);
+                int y2_needle = (int) Math.round(k_needle * x2_needle + b_needle);
+
+                //在图像上画出直线
+                Imgproc.line(temp1,new Point(x1_needle,y1_needle),new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
+                //Imgproc.line(temp,center,new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
+                Log.d("axit","center.x:" + center.x + "center.y" + center.y);
+                Log.d("axit","needle.x:" + x1_needle + "needle.y" + y1_needle);
+
+                //Imgproc.cvtColor(n_mask,n_mask,Imgproc.COLOR_GRAY2RGB);
                 //temp
-                bitmap6 = Bitmap.createBitmap(n_mask.width(), n_mask.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(n_mask, bitmap6);
+                bitmap6 = Bitmap.createBitmap(temp1.width(), temp1.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(temp1, bitmap6);
                 test6.setImageBitmap(bitmap6);
                 //end 霍夫直线检测
 
@@ -644,6 +751,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 kernel.release();
                 gray.release();
                 n_mask.release();
+                hierarchy.release();
+                temp1.release();
                 break;
 
             default:
