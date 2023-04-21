@@ -267,13 +267,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //刻度线
                 Mat temp = new Mat();
-                Mat temp1 = new Mat();
+                //Mat temp1 = new Mat();
                 Mat gauss2 = new Mat();
                 Mat gaussTest = new Mat();
                 Utils.bitmapToMat(bitmap5, temp);
 
                 //Utils.bitmapToMat(bitmap5,temp1);
-                temp1 = temp;
+                //temp1 = temp;
 
                 Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2GRAY); //转灰度
                 //高斯
@@ -450,10 +450,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     rect.points(box);
 
 
+//                    /**
+//                     * 尝试使用背景差法
+//                     */
+//                    Mat testCircleCnt = new Mat(canny.size(), canny.type(), Scalar.all(0));
+//
+
                     for (int i = 0; i < 4; i++) {
                         // 绘制最小外接矩形的 !(四条边) --> %4 保证找到全部四条边
-                        //画出刻度线
-                        Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
+                        //画出刻度线 --> 可显示
+                        //Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
                     }
 
 
@@ -494,9 +500,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     int y1 = Math.round(k_scale * x1 + b_scale);  // 计算直线起点的y坐标
                     //int y1 = (int) center.y;
                     int y2 = Math.round(k_scale * x2 + b_scale);  // 计算直线终点的y坐标
-                    //拟合直线绘制
+
+                    //拟合直线绘制 --> 可显示
                     //Imgproc.line(temp, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0), 1);  // 绘制直线
-                    kb.add(new float[]{k_scale, b_scale});  // 将直线的斜率和截距存储到kb列表中
+
+                    // 将直线的斜率和截距存储到kb列表中
+                    kb.add(new float[]{k_scale, b_scale});
 
 
                     //temp1 = temp;
@@ -540,13 +549,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //所以可以先使用掩膜 来保证 霍夫直线检测是检测 仪表盘之内的
                 //Mat mask = new Mat(mat1.size(), mat1.type(), Scalar.all(0));
 
-                Imgproc.cvtColor(temp1,temp1,Imgproc.COLOR_BGR2RGB);
+                //Imgproc.cvtColor(temp1,temp1,Imgproc.COLOR_BGR2RGB);
 
                 //temp temp1
-                Mat circleMask = new Mat(temp1.size(), mat1.type(), Scalar.all(0));
+                Mat circleMask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
                 Imgproc.circle(circleMask, center, (int) radius[0], new Scalar(255, 255, 255), -1);
                 Mat circle = new Mat();
-                Core.bitwise_and(temp1, circleMask, circle);
+                Core.bitwise_and(temp, circleMask, circle);
 
                 Mat gray = new Mat();
                 // 将掩码转换为灰度图像
@@ -572,6 +581,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //20 150 当前效果较好
                 Imgproc.Canny(circle, gray, 20, 150, 3, true);
 
+                //整个表盘明显的canny边缘检测
+                Utils.matToBitmap(gray, bitmap4);
+                test4.setImageBitmap(bitmap4);
+
+//                /**
+//                 * 是否需要背景差法 直接去掉刻度？
+//                 */
+//
+//
+//
+
+
+
                 Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
                 // 膨胀计算
                 Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 1);
@@ -586,7 +608,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Imgproc.HoughLinesP(gray, lines, 1, Math.PI / 180.0, 100, (radius[0] / 2), 2);
 
 
-                Mat n_mask = new Mat(temp1.size(), mat1.type(), Scalar.all(0));
+                Mat n_mask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
 
                 double []axit = {0,0}; //保存指针直线的终点
                 for (int i = 0; i < lines.rows(); i++) {
@@ -705,15 +727,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int y2_needle = (int) Math.round(k_needle * x2_needle + b_needle);
 
                 //在图像上画出直线
-                Imgproc.line(temp1,new Point(x1_needle,y1_needle),new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
+                Imgproc.line(temp,new Point(x1_needle,y1_needle),new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
                 //Imgproc.line(temp,center,new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
                 Log.d("axit","center.x:" + center.x + "center.y" + center.y);
                 Log.d("axit","needle.x:" + x1_needle + "needle.y" + y1_needle);
 
                 //Imgproc.cvtColor(n_mask,n_mask,Imgproc.COLOR_GRAY2RGB);
                 //temp
-                bitmap6 = Bitmap.createBitmap(temp1.width(), temp1.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(temp1, bitmap6);
+                bitmap6 = Bitmap.createBitmap(temp.width(), temp.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(temp, bitmap6);
                 test6.setImageBitmap(bitmap6);
                 //end 霍夫直线检测
 
@@ -752,7 +774,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 gray.release();
                 n_mask.release();
                 hierarchy.release();
-                temp1.release();
+                //temp1.release();
                 break;
 
             default:
