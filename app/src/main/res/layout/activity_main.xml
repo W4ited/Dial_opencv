@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:id="@+id/relative_click">
 
     <ImageView
         android:id="@+id/test_img1"
@@ -76,6 +77,27 @@
         android:layout_below="@id/test_img6"
         android:layout_toRightOf="@id/test_start"
         android:layout_marginStart="100dp"/>
+
+    <Button
+        android:layout_below="@id/test_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/picture"
+        android:text="画图"
+        android:layout_marginStart="20dp"
+        android:background="@color/white"/>
+
+    <Button
+        android:layout_below="@id/test_start"
+        android:layout_toRightOf="@id/picture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/camera"
+        android:text="相机？"
+        android:layout_marginStart="20dp"
+        android:background="@color/white"/>
+
+
 
 
 </RelativeLayout>

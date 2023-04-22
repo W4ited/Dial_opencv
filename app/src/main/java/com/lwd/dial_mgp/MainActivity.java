@@ -10,13 +10,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnTouchListener {
 
     /**
      * 会有情况 出现ANR问题 UI not response --> 好像是因为没有release mat的问题
@@ -65,8 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //final int[] titleItem = new int[]{R.drawable.fragment_operation, R.drawable.fragment_picture};
 
     private ImageView test1, test2, test3, test4, test5, test6;
-    private Button start;
-    private TextView test_result;
+    private Button start, picture, camera;
+    private TextView text_result;
+    private RelativeLayout click;
     private Bitmap bitmap1, bitmap2, bitmap3, bitmap4, bitmap5, bitmap6;
     private List<MatOfPoint> contours = new ArrayList<>();  //原始轮廓列表
 
@@ -76,7 +80,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private List<Double> needleAreas = new ArrayList<>();   //符合条件的指针轮廓的面积列表
     private List<Double> location = new ArrayList<>();     //符合条件的轮廓的位置列表
 
+    private Point mark;
     private int count = 0;
+
+    private double x1_needle,x2_needle;
+    private int y1_needle,y2_needle;
 
 
     @Override
@@ -89,18 +97,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //组件初始化
         //init();
-
+        //click = (RelativeLayout) findViewById(R.id.relative_click);
+        //click.setOnTouchListener(this);
         test1 = (ImageView) findViewById(R.id.test_img1);
         test2 = (ImageView) findViewById(R.id.test_img2);
         test3 = (ImageView) findViewById(R.id.test_img3);
         test4 = (ImageView) findViewById(R.id.test_img4);
         test5 = (ImageView) findViewById(R.id.test_img5);
         test6 = (ImageView) findViewById(R.id.test_img6);
+        //test6.setOnClickListener(this);
+        test6.setOnTouchListener(this);
 
         start = (Button) findViewById(R.id.test_start);
         start.setOnClickListener(this);
+        picture = (Button) findViewById(R.id.picture);
+        picture.setOnClickListener(this);
+        camera = (Button) findViewById(R.id.camera);
+        camera.setOnClickListener(this);
 
-        test_result = (TextView) findViewById(R.id.text_result);
+        text_result = (TextView) findViewById(R.id.text_result);
+        text_result.setOnClickListener(this);
 
         //在外面new 则再次点击按钮时候会出错 因为再次点击时候没有new开空间 因为最后时候release释放了
         //mat1 = new Mat();
@@ -430,6 +446,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //刻度线拟合直线
                 List<float[]> kb = new ArrayList<float[]>();
 
+
+                /**
+                 *
+                 * 尝试使用背景差法
+                 *
+                 * 背景差法是一种用于减去背景信号的方法，通常用于视频或图像处理中的动态场景。
+                 * 在这种情况下，我们可以采集两个图像或帧，一个是静态背景，另一个是包含动态对象的场景。
+                 * 通过对这两个图像进行减法，我们可以得到仅包含动态对象的图像。
+                 *
+                 * 然而，如果您的应用场景是静态场景，背景差法可能不是最优的选择。
+                 * 因为在静态场景中，背景信号并不会发生变化，因此我们可以直接使用原始图像或帧，而无需进行背景减法。
+                 * 除非您需要检测静态场景中的运动目标，否则背景差法可能不适用于静态场景。
+                 *
+                 */
+                Mat testCircleCnt = new Mat(canny.size(), canny.type(), Scalar.all(0));
+
+
                 for (MatOfPoint mat : cntSet) {
                     MatOfPoint2f xx = new MatOfPoint2f(mat.toArray());
                     // 计算轮廓点集的最小外接矩形
@@ -450,19 +483,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     rect.points(box);
 
 
-//                    /**
-//                     * 尝试使用背景差法
-//                     */
-//                    Mat testCircleCnt = new Mat(canny.size(), canny.type(), Scalar.all(0));
-//
-
                     for (int i = 0; i < 4; i++) {
                         // 绘制最小外接矩形的 !(四条边) --> %4 保证找到全部四条边
                         //画出刻度线 --> 可显示
-                        //Imgproc.line(temp, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
+                        Imgproc.line(testCircleCnt, box[i], box[(i + 1) % 4], new Scalar(255, 0, 0), 2);
                     }
-
-
 
 
                     // 构造一个MatOfFloat对象，用于存储拟合得到的直线参数
@@ -511,7 +536,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //temp1 = temp;
                 }
 
-                Utils.matToBitmap(temp,bitmap2);
+                Utils.matToBitmap(testCircleCnt, bitmap2);
                 test2.setImageBitmap(bitmap2);
 
 
@@ -585,19 +610,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Utils.matToBitmap(gray, bitmap4);
                 test4.setImageBitmap(bitmap4);
 
-//                /**
-//                 * 是否需要背景差法 直接去掉刻度？
-//                 */
-//
-//
-//
+                /**
+                 * 是否需要背景差法 直接去掉刻度？
+                 *
+                 *
+                 *  没能实现
+                 *
+                 * 在图2 已经找到全部刻度
+                 *
+                 * 尝试使用减法 在图3只标绘指针
+                 *
+                 */
 
+//                Mat diff = new Mat();
+//                //Core.absdiff(testCircleCnt,gray,diff);
+//                Core.subtract(gray,testCircleCnt,diff);
+//                Utils.matToBitmap(diff,bitmap3);
+//                test3.setImageBitmap(bitmap3);
 
 
                 Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
                 // 膨胀计算
                 Imgproc.dilate(gray, gray, kernel, new Point(-1, -1), 1);
                 //形态学膨胀操作 将掩膜图像中的白色区域扩大一点 --> 以避免直线检测时漏掉元素
+
+
+                Utils.matToBitmap(gray, bitmap3);
+                test3.setImageBitmap(bitmap3);
 
                 //霍夫直线检测
                 Mat lines = new Mat();
@@ -610,7 +649,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 Mat n_mask = new Mat(temp.size(), mat1.type(), Scalar.all(0));
 
-                double []axit = {0,0}; //保存指针直线的终点
+                double[] axit = {0, 0}; //保存指针直线的终点
                 for (int i = 0; i < lines.rows(); i++) {
 //                    //HoughLines
 //                    //double rho = lines.get(i, 0)[0], theta = lines.get(i, 0)[1];
@@ -631,10 +670,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //必须绘制这直线 不然下面指针细化时候没有轮廓
                     Imgproc.line(n_mask, new Point(x1, y1), new Point(x2, y2), new Scalar(100, 100, 100), 1, Imgproc.LINE_AA, 0);
 
+                    Utils.matToBitmap(n_mask, bitmap3);
+                    test3.setImageBitmap(bitmap3);
+
                     double d1 = Distance.distanceOfPoint(x1, y1, center.x, center.y);
                     double d2 = Distance.distanceOfPoint(x2, y2, center.x, center.y);
                     //为了找到直线的终点 用axit数组保存起来直线的终点
-                    if (d1 > d2){
+                    if (d1 > d2) {
                         axit[0] = x1;
                         axit[1] = y1;
                     } else {
@@ -642,7 +684,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         axit[1] = y2;
                     }
 
-                    Log.d("axit" , "axit.x:" + axit[0] + "y:"+ axit[1]);
+                    Log.d("axit", "axit.x:" + axit[0] + "y:" + axit[1]);
 
                     //腐蚀操作 --> 可以缩小图像中的物体，使其变得更加细小 --> 看不到图像
                     //Imgproc.erode(n_mask,n_mask,kernel,new Point(-1,-1),1);
@@ -670,11 +712,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //Imgproc.line(gray, new Point(oneLine[0], oneLine[1]), new Point(oneLine[2], oneLine[3]), new Scalar(0, 0, 255), 2, 8, 0);
                 }
 
+                /**
+                 * 指针细化
+                 */
                 //再查找直线轮廓,指针细化,找指针的骨架
                 //找到图像中的轮廓
                 //MatOfPoint2f needleContours = new MatOfPoint2f();
                 Mat hierarchy = new Mat();
-                Imgproc.cvtColor(n_mask,n_mask,Imgproc.COLOR_RGB2GRAY);
+                Imgproc.cvtColor(n_mask, n_mask, Imgproc.COLOR_RGB2GRAY);
                 Imgproc.GaussianBlur(n_mask, n_mask, new Size(3, 3), 0);
                 Imgproc.adaptiveThreshold(n_mask, n_mask, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, -10);
 
@@ -683,7 +728,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //所以如果上面的指针不绘制 会导致图全黑 没有轮廓 所以找不到轮廓 下面get方法会报错
                 Imgproc.findContours(n_mask, needleCnt, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE);
 
-                Log.d("axit" , "needleSize:"  + needleCnt.size());
+                Log.d("axit", "needleSize:" + needleCnt.size());
                 //计算每个轮廓的面积
                 for (MatOfPoint mat : needleCnt) {
                     //计算轮廓面积
@@ -691,7 +736,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     needleAreas.add(area);
                 }
 
-                Log.d("axit" , "needleAreasSize:"  + needleAreas.size());
+                Log.d("axit", "needleAreasSize:" + needleAreas.size());
 
                 //找到具有最大面积的轮廓的索引
                 int maxIndex = 0;       //开始索引为0 从开始找
@@ -707,7 +752,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //因为是按照轮廓列表 计算面积 所以索引也是对应位置
                 MatOfPoint maxContour = needleCnt.get(maxIndex);
 
-                Log.d("axit","maxIndex:" + maxIndex);
+                Log.d("axit", "maxIndex:" + maxIndex);
 
                 //使用最小二乘法拟合轮廓上的一条直线
                 MatOfPoint2f maxContour2f = new MatOfPoint2f(maxContour.toArray());
@@ -719,18 +764,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 double b_needle = lineParams.get(3, 0)[0] - k_needle * lineParams.get(2, 0)[0];
 
                 //获取直线上的两个点的x坐标
-                double x1_needle = center.x;
-                double x2_needle = axit[0];
+                x1_needle = center.x;
+                x2_needle = axit[0];
 
                 //获取直线上的两个点的y坐标
-                int y1_needle = (int) Math.round(k_needle * x1_needle + b_needle);
-                int y2_needle = (int) Math.round(k_needle * x2_needle + b_needle);
+                y1_needle = (int) Math.round(k_needle * x1_needle + b_needle);
+                y2_needle = (int) Math.round(k_needle * x2_needle + b_needle);
 
                 //在图像上画出直线
-                Imgproc.line(temp,new Point(x1_needle,y1_needle),new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
+                Imgproc.line(temp, new Point(x1_needle, y1_needle), new Point(x2_needle, y2_needle), new Scalar(255, 0, 0), 4, Imgproc.LINE_AA);
                 //Imgproc.line(temp,center,new Point(x2_needle,y2_needle),new Scalar(255,0,0),4,Imgproc.LINE_AA);
-                Log.d("axit","center.x:" + center.x + "center.y" + center.y);
-                Log.d("axit","needle.x:" + x1_needle + "needle.y" + y1_needle);
+                Log.d("mark", "center.x:" + center.x + "center.y" + center.y);
+                Log.d("axit", "needle.x:" + x1_needle + "needle.y" + y1_needle);
+
+                //找到零刻度线 --> 显示读数
+                //Imgproc.circle(temp, mark, 4, new Scalar(255, 0, 0), -1);
+                //Log.d("mark","mark.x:" + mark.x + "mark.y:" + mark.y);
+                //Imgproc.line(temp,center,mark,new Scalar(0,0,255),4,Imgproc.LINE_AA);
+
 
                 //Imgproc.cvtColor(n_mask,n_mask,Imgproc.COLOR_GRAY2RGB);
                 //temp
@@ -739,6 +790,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 test6.setImageBitmap(bitmap6);
                 //end 霍夫直线检测
 
+                Imgproc.circle(temp, mark, 4, new Scalar(255, 0, 0), -1);
+                Log.d("mark", "mark.x:" + mark.x + "mark.y:" + mark.y);
+                Imgproc.line(temp, center, mark, new Scalar(0, 0, 255), 4, Imgproc.LINE_AA);
+                Utils.matToBitmap(temp, bitmap6);
+                test6.setImageBitmap(bitmap6);
 
                 Utils.matToBitmap(gaussTest, bitmap5);
                 test5.setImageBitmap(bitmap5);
@@ -748,7 +804,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 test1.setImageBitmap(bitmap1);
 
 
-                //高斯背景重建？？
+                //高斯背景重建？？ --> 动态 --> 背景差法
 
 
                 //释放mat内存
@@ -777,9 +833,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //temp1.release();
                 break;
 
+            case R.id.picture:
+                Intent pic = new Intent(MainActivity.this, PictureDraw.class);
+                startActivity(pic);
+                break;
+            case R.id.text_result:
+                double data = 0.0;
+
+                //alpha为刻度起点和终点与圆心所成的夹角，beta为指针偏移刻度起点的角度，r为量程
+                double r = 100;
+                // ！ 感觉公式不对
+                //double alpha = Math.atan((y1_needle-mark.y)/(x1_needle-mark.x)-(y1_needle-mark.y)/(x1_needle-mark.x));
+                double alpha = 360;
+                double beta = Math.atan(((y1_needle-y2_needle)/(x1_needle-x2_needle)-(y1_needle-mark.y)/(x1_needle-mark.x))/(1+(y1_needle-mark.y)/(x1_needle-mark.x)*(y1_needle-y2_needle)/(x1_needle-x2_needle)));
+                double beta_degress = beta * (180 / Math.PI);
+
+                data = r / alpha * beta_degress;
+                String data_result = Double.toString(data);
+                text_result.setText(data_result);
+
+                break;
             default:
                 break;
         }
+    }
+
+    @Override
+    public boolean onTouch(View view, MotionEvent motionEvent) {
+        switch (motionEvent.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mark = new Point(motionEvent.getX() * 2, motionEvent.getY() - 50);
+                Log.d("mark", "markFist:" + mark.x + "y:" + mark.y);
+        }
+
+        /**
+         *  注意返回值
+         *  true：view继续响应Touch操作；
+         *  false：view不再响应Touch操作，故此处若为false，只能显示起始位置，不能显示实时位置和结束位置
+         */
+        return false;
     }
 
 
