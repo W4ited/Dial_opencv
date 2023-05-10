@@ -31,6 +31,12 @@
 
 14.显示读数
 
-误差：由于圆形表盘截取和0刻度线截取有误差 导致最后读数会产生误差。
+## 误差：
+由于圆形表盘截取和0刻度线截取有误差 导致最后读数会产生误差。
      大致已经完成 可以改进了进行函数的封装。
+
+## 可识别图片
+ps：two、three、eight、nine、ten、sixteen、nineteen、twenty_eight、thirty_three、forty_two 不造成闪退
+以上除two、three、twenty_eight之外均可以基本识别读出
+ -->  仍可以进行优化改进
 

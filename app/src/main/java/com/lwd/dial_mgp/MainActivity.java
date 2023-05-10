@@ -2,17 +2,11 @@ package com.lwd.dial_mgp;
 
 import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
 import static org.opencv.imgproc.Imgproc.RETR_LIST;
-import static org.opencv.imgproc.Imgproc.approxPolyDP;
 
-import androidx.annotation.LongDef;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -23,18 +17,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
-import com.lwd.dial_mgp.Picture.PictureActivity;
-import com.lwd.dial_mgp.Result.ResultActivity;
-
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
-import org.opencv.core.MatOfFloat6;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -42,12 +29,9 @@ import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, View.OnTouchListener {
@@ -162,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //用mat读入图片
                 try {
-                    mat1 = Utils.loadResource(this, R.drawable.meter);
+                    mat1 = Utils.loadResource(this, R.drawable.forty_two);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -204,6 +188,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Utils.matToBitmap(gauss, bitmap3);    //mat转为bitmap格式用于Android上显示图片
                 test3.setImageBitmap(bitmap3);
                 //end 高斯模糊
+
+                Utils.matToBitmap(gauss, bitmap2);    //mat转为bitmap格式用于Android上显示图片
+                test2.setImageBitmap(bitmap2);
+
 
                 Mat canny = new Mat();
 
@@ -536,8 +524,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //temp1 = temp;
                 }
 
-                Utils.matToBitmap(testCircleCnt, bitmap2);
-                test2.setImageBitmap(bitmap2);
+                //Utils.matToBitmap(testCircleCnt, bitmap2);
+                //test2.setImageBitmap(bitmap2);
 
 
                 //霍夫直线检测 --> 找指针
@@ -723,6 +711,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Imgproc.GaussianBlur(n_mask, n_mask, new Size(3, 3), 0);
                 Imgproc.adaptiveThreshold(n_mask, n_mask, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, -10);
 
+                bitmap1 = Bitmap.createBitmap(n_mask.width(), n_mask.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(n_mask, bitmap1);
+                test1.setImageBitmap(bitmap1);
 
                 //needleCnt 为空的 --> 上面的指针绘制必须画出来 因为需要以此图进行轮廓寻找并且使用最小二乘法
                 //所以如果上面的指针不绘制 会导致图全黑 没有轮廓 所以找不到轮廓 下面get方法会报错
@@ -740,6 +731,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //找到具有最大面积的轮廓的索引
                 int maxIndex = 0;       //开始索引为0 从开始找
+//                if (needleAreas.size() != 0){
+//                    double needleMaxArea = needleAreas.get(0); //开始最大面积为第一个 后面比较之后进行修改
+//                    for (int i = 0; i < needleAreas.size(); i++) {
+//                        if (needleAreas.get(i) > needleMaxArea) {
+//                            maxIndex = i;
+//                            needleMaxArea = needleAreas.get(i);
+//                        }
+//                    }
+//
+//                }
                 double needleMaxArea = needleAreas.get(0); //开始最大面积为第一个 后面比较之后进行修改
                 for (int i = 0; i < needleAreas.size(); i++) {
                     if (needleAreas.get(i) > needleMaxArea) {
@@ -799,9 +800,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Utils.matToBitmap(gaussTest, bitmap5);
                 test5.setImageBitmap(bitmap5);
 
-                bitmap1 = Bitmap.createBitmap(gauss2.width(), gauss2.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(gauss2, bitmap1);
-                test1.setImageBitmap(bitmap1);
+                //bitmap1 = Bitmap.createBitmap(gauss2.width(), gauss2.height(), Bitmap.Config.ARGB_8888);
+                //Utils.matToBitmap(gauss2, bitmap1);
+                //test1.setImageBitmap(bitmap1);
 
 
                 //高斯背景重建？？ --> 动态 --> 背景差法
@@ -849,6 +850,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 double beta_degress = beta * (180 / Math.PI);
 
                 data = r / alpha * beta_degress;
+                //保证读数不是负数
+                if (data < 0 ){
+                    data = r + data;
+                }
                 String data_result = Double.toString(data);
                 text_result.setText(data_result);
 

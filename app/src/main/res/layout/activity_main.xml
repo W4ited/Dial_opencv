@@ -14,7 +14,7 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_margin="20dp"
-        android:src="@drawable/meter"/>
+        android:src="@drawable/forty_two"/>
 
     <ImageView
         android:layout_toRightOf="@id/test_img1"
@@ -22,7 +22,7 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_margin="20dp"
-        android:src="@drawable/meter"/>
+        android:src="@drawable/forty_two"/>
 
     <ImageView
         android:layout_below="@id/test_img1"
@@ -30,7 +30,7 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_margin="20dp"
-        android:src="@drawable/meter"/>
+        android:src="@drawable/forty_two"/>
 
     <ImageView
         android:layout_below="@id/test_img1"
@@ -39,14 +39,14 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_margin="20dp"
-        android:src="@drawable/meter"/>
+        android:src="@drawable/forty_two"/>
     <ImageView
         android:layout_below="@id/test_img3"
         android:id="@+id/test_img5"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_margin="20dp"
-        android:src="@drawable/meter"/>
+        android:src="@drawable/forty_two"/>
 
     <ImageView
         android:id="@+id/test_img6"
@@ -56,9 +56,8 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
         android:layout_toRightOf="@id/test_img5"
-        android:src="@drawable/meter" />
+        android:src="@drawable/forty_two" />
 
     <Button
         android:layout_below="@id/test_img5"
