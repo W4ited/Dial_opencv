@@ -1,52 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relative_click"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity"
-    android:id="@+id/relative_click">
+    tools:context=".MainActivity">
+
 
     <ImageView
         android:id="@+id/test_img1"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_margin="20dp"
-        android:src="@drawable/forty_two"/>
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+
+        android:src="@drawable/meter" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/test_img1"
+        android:layout_marginStart="30dp"
+        android:text="原图" />
+
 
     <ImageView
-        android:layout_toRightOf="@id/test_img1"
         android:id="@+id/test_img2"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_margin="20dp"
-        android:src="@drawable/forty_two"/>
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_toRightOf="@id/test_img1"
+        android:src="@drawable/meter" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/test_img1"
+        android:layout_marginStart="220dp"
+        android:text="仪表盘" />
 
     <ImageView
-        android:layout_below="@id/test_img1"
         android:id="@+id/test_img3"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_margin="20dp"
-        android:src="@drawable/forty_two"/>
+        android:layout_below="@id/test_img1"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/meter" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/test_img3"
+        android:layout_marginStart="30dp"
+        android:text="仪表边缘检测" />
 
     <ImageView
-        android:layout_below="@id/test_img1"
-        android:layout_toRightOf="@id/test_img3"
         android:id="@+id/test_img4"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_margin="20dp"
-        android:src="@drawable/forty_two"/>
-    <ImageView
+        android:layout_below="@id/test_img1"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_toRightOf="@id/test_img3"
+        android:src="@drawable/meter" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_below="@id/test_img3"
+        android:layout_marginStart="220dp"
+        android:text="刻度线" />
+
+
+    <ImageView
         android:id="@+id/test_img5"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_margin="20dp"
-        android:src="@drawable/forty_two"/>
+        android:layout_below="@id/test_img3"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/meter" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/test_img5"
+        android:layout_marginStart="30dp"
+        android:text="指针" />
 
     <ImageView
         android:id="@+id/test_img6"
@@ -57,46 +106,34 @@
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
         android:layout_toRightOf="@id/test_img5"
-        android:src="@drawable/forty_two" />
+        android:src="@drawable/meter" />
 
     <Button
-        android:layout_below="@id/test_img5"
+        android:id="@+id/test_start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/test_start"
-        android:text="开始"
-        android:layout_margin="20dp"
-        android:background="@color/white"/>
+        android:layout_below="@id/test_img5"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="40dp"
+        android:background="@color/white"
+        android:text="开始" />
+
+    <TextView
+        android:id="@+id/text_result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/test_img6"
+        android:layout_marginStart="100dp"
+        android:layout_toRightOf="@id/test_start"
+        android:text="读数结果" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/text_result"
-        android:text="读数结果"
-        android:layout_below="@id/test_img6"
-        android:layout_toRightOf="@id/test_start"
-        android:layout_marginStart="100dp"/>
-
-    <Button
         android:layout_below="@id/test_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/picture"
-        android:text="画图"
         android:layout_marginStart="20dp"
-        android:background="@color/white"/>
-
-    <Button
-        android:layout_below="@id/test_start"
-        android:layout_toRightOf="@id/picture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/camera"
-        android:text="相机？"
-        android:layout_marginStart="20dp"
-        android:background="@color/white"/>
-
-
-
+        android:layout_marginTop="20dp"
+        android:text="基于Android平台的指针式仪表读数识别" />
 
 </RelativeLayout>

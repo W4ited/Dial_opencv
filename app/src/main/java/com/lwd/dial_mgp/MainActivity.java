@@ -94,10 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         start = (Button) findViewById(R.id.test_start);
         start.setOnClickListener(this);
-        picture = (Button) findViewById(R.id.picture);
-        picture.setOnClickListener(this);
-        camera = (Button) findViewById(R.id.camera);
-        camera.setOnClickListener(this);
+
 
         text_result = (TextView) findViewById(R.id.text_result);
         text_result.setOnClickListener(this);
@@ -146,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //用mat读入图片
                 try {
-                    mat1 = Utils.loadResource(this, R.drawable.forty_two);
+                    mat1 = Utils.loadResource(this, R.drawable.meter);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -189,8 +186,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 test3.setImageBitmap(bitmap3);
                 //end 高斯模糊
 
-                Utils.matToBitmap(gauss, bitmap2);    //mat转为bitmap格式用于Android上显示图片
-                test2.setImageBitmap(bitmap2);
+                //Utils.matToBitmap(gauss, bitmap2);    //mat转为bitmap格式用于Android上显示图片
+                //test2.setImageBitmap(bitmap2);
 
 
                 Mat canny = new Mat();
@@ -260,6 +257,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 bitmap5 = Bitmap.createBitmap(result.width(), result.height(), Bitmap.Config.ARGB_8888);
                 Log.d("gauss size", "width:" + result.width() + "height:" + result.height());
+
+                Utils.matToBitmap(result, bitmap2);
+                test2.setImageBitmap(bitmap2);
 
 
                 //因为mat对象使用的是BGR格式的 转为RGB格式才能显示正确颜色
@@ -524,8 +524,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //temp1 = temp;
                 }
 
-                //Utils.matToBitmap(testCircleCnt, bitmap2);
-                //test2.setImageBitmap(bitmap2);
+                Utils.matToBitmap(testCircleCnt, bitmap4);
+                test4.setImageBitmap(bitmap4);
 
 
                 //霍夫直线检测 --> 找指针
@@ -595,8 +595,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Imgproc.Canny(circle, gray, 20, 150, 3, true);
 
                 //整个表盘明显的canny边缘检测
-                Utils.matToBitmap(gray, bitmap4);
-                test4.setImageBitmap(bitmap4);
+                //Utils.matToBitmap(gray, bitmap4);
+                //test4.setImageBitmap(bitmap4);
 
                 /**
                  * 是否需要背景差法 直接去掉刻度？
@@ -711,9 +711,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Imgproc.GaussianBlur(n_mask, n_mask, new Size(3, 3), 0);
                 Imgproc.adaptiveThreshold(n_mask, n_mask, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, -10);
 
-                bitmap1 = Bitmap.createBitmap(n_mask.width(), n_mask.height(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(n_mask, bitmap1);
-                test1.setImageBitmap(bitmap1);
+                //bitmap1 = Bitmap.createBitmap(n_mask.width(), n_mask.height(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(n_mask, bitmap5);
+                test5.setImageBitmap(bitmap5);
 
                 //needleCnt 为空的 --> 上面的指针绘制必须画出来 因为需要以此图进行轮廓寻找并且使用最小二乘法
                 //所以如果上面的指针不绘制 会导致图全黑 没有轮廓 所以找不到轮廓 下面get方法会报错
@@ -797,8 +797,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Utils.matToBitmap(temp, bitmap6);
                 test6.setImageBitmap(bitmap6);
 
-                Utils.matToBitmap(gaussTest, bitmap5);
-                test5.setImageBitmap(bitmap5);
+                Utils.matToBitmap(gaussTest, bitmap3);
+                test3.setImageBitmap(bitmap3);
 
                 //bitmap1 = Bitmap.createBitmap(gauss2.width(), gauss2.height(), Bitmap.Config.ARGB_8888);
                 //Utils.matToBitmap(gauss2, bitmap1);
@@ -834,10 +834,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //temp1.release();
                 break;
 
-            case R.id.picture:
-                Intent pic = new Intent(MainActivity.this, PictureDraw.class);
-                startActivity(pic);
-                break;
             case R.id.text_result:
                 double data = 0.0;
 
